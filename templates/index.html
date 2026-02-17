@@ -1,26 +1,75 @@
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>RuralCare AI Advanced</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <title>RuralCare AI - Advanced Health Intelligence</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 
 <div class="container">
-<h1>🏥 RuralCare AI - Advanced</h1>
 
-<textarea id="symptoms" placeholder="Describe symptoms..."></textarea>
-<button onclick="analyze()">Analyze</button>
+    <h1>🏥 RuralCare AI</h1>
 
-<div id="output" class="card"></div>
+    <!-- =========================
+         PATIENT SECTION
+    ========================== -->
 
-<h2>Doctor Analytics</h2>
-<canvas id="chart"></canvas>
+    <section id="patientSection">
+
+        <h2>🧑 Patient AI Symptom Assistant</h2>
+
+        <label>Village Name</label>
+        <input type="text" id="village" placeholder="Enter your village">
+
+        <label>Describe Your Symptoms</label>
+        <textarea id="symptoms" placeholder="Example: severe chest pain and breathlessness for 3 days"></textarea>
+
+        <button onclick="analyze()">🔍 Analyze Symptoms</button>
+
+        <div id="output"></div>
+
+    </section>
+
+    <!-- =========================
+         RISK VISUALIZATION
+    ========================== -->
+
+    <section id="visualSection">
+
+        <h2>📊 AI Risk Score Visualization</h2>
+        <canvas id="chart"></canvas>
+
+    </section>
+
+    <!-- =========================
+         DOCTOR ANALYTICS
+    ========================== -->
+
+    <section id="doctorSection">
+
+        <h2>👨‍⚕️ Doctor Analytics Dashboard</h2>
+
+        <button onclick="loadAnalytics()">🔄 Refresh Analytics</button>
+
+        <div id="analyticsOutput" class="card">
+            <p>Analytics will load here...</p>
+        </div>
+
+    </section>
 
 </div>
+
+<!-- =========================
+     JS
+========================== -->
 
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
