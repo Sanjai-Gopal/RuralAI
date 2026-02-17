@@ -163,10 +163,14 @@ def analyze_text(text, village="Unknown"):
 # =========================================
 # AUTHENTICATION ROUTES
 # =========================================
-
 @app.route("/")
 def home():
+    if current_user.is_authenticated:
+        if current_user.role == "doctor":
+            return redirect(url_for("doctor_dashboard"))
+        return redirect(url_for("patient_dashboard"))
     return redirect(url_for("login"))
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -255,23 +259,34 @@ def analyze():
 
     risk, score, explanation = analyze_text(text, current_user.village)
 
-    new_case = Case(
-        patient_id=current_user.id,
-        symptoms=text,
-        village=current_user.village,
-        risk_level=risk,
-        risk_score=score,
-        explanation=explanation
-    )
+import json
+
+new_case = Case(
+    patient_id=current_user.id,
+    symptoms=text,
+    village=current_user.village,
+    risk_level=risk,
+    risk_score=score,
+    explanation=json.dumps(explanation)
+)
+
 
     db.session.add(new_case)
     db.session.commit()
 
     # Patient DOES NOT see score
-    return jsonify({
-        "risk_level": risk,
-        "suggestion": explanation
-    })
+# Generate human readable AI suggestion
+if risk == "HIGH RISK":
+    suggestion_text = "Your symptoms indicate a potentially serious condition. Please visit the nearest hospital or healthcare center immediately."
+elif risk == "MODERATE RISK":
+    suggestion_text = "Your symptoms may require medical attention. Consider consulting a doctor within the next 24-48 hours."
+else:
+    suggestion_text = "Your symptoms appear mild. Rest, hydration, and monitoring are recommended. Seek medical advice if symptoms worsen."
+
+return jsonify({
+    "risk_level": risk,
+    "suggestion": suggestion_text
+})
 
 # =========================================
 # DOCTOR DASHBOARD
