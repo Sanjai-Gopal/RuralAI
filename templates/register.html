@@ -1,1 +1,46 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register - RuralCare AI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <div class="auth-box card">
+        <h2>📝 Create Account</h2>
+
+        <form method="POST">
+            <label>Full Name</label>
+            <input type="text" name="full_name" required>
+
+            <label>Email</label>
+            <input type="email" name="email" required>
+
+            <label>Password</label>
+            <input type="password" name="password" required>
+
+            <label>Age</label>
+            <input type="number" name="age" required>
+
+            <label>Village</label>
+            <input type="text" name="village" required>
+
+            <label>Role</label>
+            <select name="role" required>
+                <option value="patient">Patient</option>
+                <option value="doctor">Doctor</option>
+            </select>
+
+            <button type="submit">Create Account</button>
+        </form>
+
+        <p>
+            Already registered? <a href="{{ url_for('login') }}">Login</a>
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
