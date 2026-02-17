@@ -1,1 +1,57 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Doctor Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>👨‍⚕️ Doctor Dashboard</h1>
+
+    <div class="card">
+        <p>Welcome Dr. {{ current_user.full_name }}</p>
+        <a href="{{ url_for('logout') }}"><button>Logout</button></a>
+    </div>
+
+    <div class="card">
+        <h3>📊 All Patient Cases</h3>
+
+        <table>
+            <tr>
+                <th>Patient</th>
+                <th>Symptoms</th>
+                <th>Village</th>
+                <th>Risk</th>
+                <th>Override</th>
+                <th>Action</th>
+            </tr>
+
+            {% for case in cases %}
+            <tr>
+                <td>{{ case.patient_id }}</td>
+                <td>{{ case.symptoms }}</td>
+                <td>{{ case.village }}</td>
+                <td>{{ case.risk_level }}</td>
+                <td>{{ case.doctor_override or "None" }}</td>
+                <td>
+                    <button onclick="overrideCase({{ case.id }})">Override</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>📈 Analytics</h3>
+        <button onclick="loadAnalytics()">Load Analytics</button>
+        <div id="analytics"></div>
+    </div>
+
+</div>
+
+</body>
+</html>
