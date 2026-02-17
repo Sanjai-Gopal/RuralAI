@@ -1,1 +1,49 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Patient Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>🏥 RuralCare AI</h1>
+
+    <div class="card">
+        <h2>🧑 Welcome, {{ current_user.full_name }}</h2>
+        <p><strong>Village:</strong> {{ current_user.village }}</p>
+        <p><strong>Age:</strong> {{ current_user.age }}</p>
+        <a href="{{ url_for('logout') }}"><button>Logout</button></a>
+    </div>
+
+    <div class="card">
+        <h3>🧠 AI Symptom Analyzer</h3>
+
+        <textarea id="symptoms" placeholder="Describe your symptoms in detail..."></textarea>
+
+        <button onclick="analyzeSymptoms()">Analyze</button>
+
+        <div id="result"></div>
+    </div>
+
+    <div class="card">
+        <h3>📋 Your Previous Cases</h3>
+
+        {% for case in cases %}
+            <div class="card">
+                <p><strong>Symptoms:</strong> {{ case.symptoms }}</p>
+                <p><strong>Risk Level:</strong> {{ case.risk_level }}</p>
+                <p><strong>Date:</strong> {{ case.created_at }}</p>
+            </div>
+        {% else %}
+            <p>No previous cases.</p>
+        {% endfor %}
+    </div>
+
+</div>
+
+</body>
+</html>
