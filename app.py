@@ -7,6 +7,7 @@ import os
 import re
 from collections import defaultdict
 import spacy
+import json
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -41,7 +42,7 @@ class User(UserMixin, db.Model):
     full_name = db.Column(db.String(150))
     email = db.Column(db.String(150), unique=True)
     password = db.Column(db.String(200))
-    role = db.Column(db.String(50))  # patient or doctor
+    role = db.Column(db.String(50))
     village = db.Column(db.String(150))
     age = db.Column(db.Integer)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -65,7 +66,15 @@ with app.app_context():
     db.create_all()
 
 # =========================================
-# ADVANCED NLP AI ENGINE
+# TEST ROUTE (Added here)
+# =========================================
+
+@app.route("/test")
+def test():
+    return "Server Updated"
+
+# =========================================
+# NLP ENGINE
 # =========================================
 
 SYMPTOM_WEIGHTS = {
@@ -115,32 +124,26 @@ def analyze_text(text, village="Unknown"):
     score = 0
     emergency_flag = False
 
-    # Lemmatized phrase reconstruction
     normalized_text = " ".join([token.lemma_ for token in doc])
 
-    # Detect symptoms using NLP
     for symptom, weight in SYMPTOM_WEIGHTS.items():
         if symptom in normalized_text:
             detected_symptoms.append(symptom)
             score += weight
 
-    # Detect severity modifiers
     for token in doc:
         if token.lemma_ in SEVERITY_MODIFIERS:
             detected_severity.append(token.lemma_)
             score += SEVERITY_MODIFIERS[token.lemma_]
 
-    # Emergency detection
     for pattern in EMERGENCY_PATTERNS:
         if pattern in text.lower():
             emergency_flag = True
             score += 15
 
-    # Duration extraction
     duration_match = re.findall(r"(\d+\s*(day|days|week|weeks|month|months|hour|hours))", text.lower())
     duration = duration_match[0][0] if duration_match else "not specified"
 
-    # Risk Classification
     if emergency_flag or score >= 20:
         risk = "HIGH RISK"
     elif score >= 10:
@@ -154,15 +157,15 @@ def analyze_text(text, village="Unknown"):
         "emergency_detected": emergency_flag,
         "duration": duration,
         "final_score": score,
-        "explanation": f"Risk calculated using NLP lemmatization, weighted symptom scoring, and severity amplification."
+        "explanation": "Risk calculated using NLP lemmatization and weighted scoring."
     }
 
     return risk, score, reasoning
 
+# =========================================
+# AUTH ROUTES
+# =========================================
 
-# =========================================
-# AUTHENTICATION ROUTES
-# =========================================
 @app.route("/")
 def home():
     if current_user.is_authenticated:
@@ -170,7 +173,6 @@ def home():
             return redirect(url_for("doctor_dashboard"))
         return redirect(url_for("patient_dashboard"))
     return redirect(url_for("login"))
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -223,10 +225,6 @@ def register():
 
     return render_template("register.html")
 
-@app.route("/forgot")
-def forgot():
-    return render_template("forgot.html")
-
 @app.route("/logout")
 @login_required
 def logout():
@@ -259,34 +257,29 @@ def analyze():
 
     risk, score, explanation = analyze_text(text, current_user.village)
 
-import json
-
-new_case = Case(
-    patient_id=current_user.id,
-    symptoms=text,
-    village=current_user.village,
-    risk_level=risk,
-    risk_score=score,
-    explanation=json.dumps(explanation)
-)
-
+    new_case = Case(
+        patient_id=current_user.id,
+        symptoms=text,
+        village=current_user.village,
+        risk_level=risk,
+        risk_score=score,
+        explanation=json.dumps(explanation)
+    )
 
     db.session.add(new_case)
     db.session.commit()
 
-    # Patient DOES NOT see score
-# Generate human readable AI suggestion
-if risk == "HIGH RISK":
-    suggestion_text = "Your symptoms indicate a potentially serious condition. Please visit the nearest hospital or healthcare center immediately."
-elif risk == "MODERATE RISK":
-    suggestion_text = "Your symptoms may require medical attention. Consider consulting a doctor within the next 24-48 hours."
-else:
-    suggestion_text = "Your symptoms appear mild. Rest, hydration, and monitoring are recommended. Seek medical advice if symptoms worsen."
+    if risk == "HIGH RISK":
+        suggestion_text = "Please visit the nearest hospital immediately."
+    elif risk == "MODERATE RISK":
+        suggestion_text = "Consult a doctor within 24-48 hours."
+    else:
+        suggestion_text = "Rest and monitor symptoms."
 
-return jsonify({
-    "risk_level": risk,
-    "suggestion": suggestion_text
-})
+    return jsonify({
+        "risk_level": risk,
+        "suggestion": suggestion_text
+    })
 
 # =========================================
 # DOCTOR DASHBOARD
@@ -297,7 +290,6 @@ return jsonify({
 def doctor_dashboard():
     if current_user.role != "doctor":
         return redirect(url_for("login"))
-
     cases = Case.query.all()
     return render_template("doctor_dashboard.html", cases=cases)
 
@@ -319,7 +311,7 @@ def doctor_override():
     return jsonify({"error": "Case not found"}), 404
 
 # =========================================
-# ANALYTICS (DOCTOR ONLY)
+# ANALYTICS
 # =========================================
 
 @app.route("/analytics")
