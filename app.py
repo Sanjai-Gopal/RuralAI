@@ -6,6 +6,9 @@ from datetime import datetime
 import os
 import re
 from collections import defaultdict
+import spacy
+
+nlp = spacy.load("en_core_web_sm")
 
 # =========================================
 # APP CONFIGURATION
@@ -62,62 +65,100 @@ with app.app_context():
     db.create_all()
 
 # =========================================
-# ADVANCED AI ENGINE (KEPT FROM BEFORE)
+# ADVANCED NLP AI ENGINE
 # =========================================
 
-HIGH_RISK = {
-    "chest pain": 8,
-    "breathlessness": 8,
-    "unconscious": 10,
-    "seizure": 9,
-    "blood vomiting": 9,
-    "stroke": 10,
+SYMPTOM_WEIGHTS = {
+    "chest pain": 10,
+    "breathlessness": 9,
+    "shortness of breath": 9,
+    "unconscious": 12,
+    "seizure": 10,
+    "vomiting blood": 11,
+    "stroke": 12,
+    "high fever": 7,
+    "persistent cough": 6,
+    "diarrhea": 5,
+    "abdominal pain": 6,
+    "headache": 4,
+    "migraine": 5,
+    "fatigue": 3,
+    "dizziness": 4,
+    "infection": 5,
+    "cold": 2,
+    "sore throat": 3,
+    "body pain": 3,
+    "nausea": 3
 }
 
-MODERATE_RISK = {
-    "high fever": 5,
-    "persistent cough": 5,
-    "vomiting": 4,
-    "diarrhea": 4,
-    "severe headache": 5,
-    "abdominal pain": 5,
+SEVERITY_MODIFIERS = {
+    "severe": 3,
+    "extreme": 4,
+    "persistent": 2,
+    "continuous": 2,
+    "intense": 3
 }
 
-MILD_RISK = {
-    "cold": 1,
-    "fatigue": 2,
-    "sore throat": 2,
-    "body pain": 2,
-    "mild fever": 2,
-}
+EMERGENCY_PATTERNS = [
+    "cannot breathe",
+    "not breathing",
+    "collapsed",
+    "losing consciousness",
+    "heavy bleeding"
+]
 
 def analyze_text(text, village="Unknown"):
-    text = text.lower()
+    doc = nlp(text.lower())
+
+    detected_symptoms = []
+    detected_severity = []
     score = 0
-    detected = []
+    emergency_flag = False
 
-    for group in [HIGH_RISK, MODERATE_RISK, MILD_RISK]:
-        for symptom, weight in group.items():
-            if symptom in text:
-                score += weight
-                detected.append(symptom)
+    # Lemmatized phrase reconstruction
+    normalized_text = " ".join([token.lemma_ for token in doc])
 
-    if "severe" in text or "persistent" in text:
-        score += 2
+    # Detect symptoms using NLP
+    for symptom, weight in SYMPTOM_WEIGHTS.items():
+        if symptom in normalized_text:
+            detected_symptoms.append(symptom)
+            score += weight
 
-    duration_match = re.findall(r"(\d+\s*(day|days|week|weeks|month|months))", text)
+    # Detect severity modifiers
+    for token in doc:
+        if token.lemma_ in SEVERITY_MODIFIERS:
+            detected_severity.append(token.lemma_)
+            score += SEVERITY_MODIFIERS[token.lemma_]
+
+    # Emergency detection
+    for pattern in EMERGENCY_PATTERNS:
+        if pattern in text.lower():
+            emergency_flag = True
+            score += 15
+
+    # Duration extraction
+    duration_match = re.findall(r"(\d+\s*(day|days|week|weeks|month|months|hour|hours))", text.lower())
     duration = duration_match[0][0] if duration_match else "not specified"
 
-    if score >= 12:
+    # Risk Classification
+    if emergency_flag or score >= 20:
         risk = "HIGH RISK"
-    elif score >= 6:
+    elif score >= 10:
         risk = "MODERATE RISK"
     else:
         risk = "LOW RISK"
 
-    explanation = f"Detected: {', '.join(detected)} | Duration: {duration}"
+    reasoning = {
+        "detected_symptoms": detected_symptoms,
+        "severity_modifiers": detected_severity,
+        "emergency_detected": emergency_flag,
+        "duration": duration,
+        "final_score": score,
+        "explanation": f"Risk calculated using NLP lemmatization, weighted symptom scoring, and severity amplification."
+    }
 
-    return risk, score, explanation
+    return risk, score, reasoning
+
 
 # =========================================
 # AUTHENTICATION ROUTES
