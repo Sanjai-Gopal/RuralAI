@@ -1,19 +1,14 @@
-let riskChart = null;
+let chartInstance = null;
 
-/* ===============================
-   ANALYZE FUNCTION
-=================================*/
+/* =========================================
+   PATIENT NLP ANALYSIS
+========================================= */
 
-async function analyze() {
-    const text = document.getElementById("symptoms").value.trim();
-    const villageInput = document.getElementById("village");
+async function analyzeSymptoms() {
+    const symptoms = document.getElementById("symptoms").value.trim();
+    const resultDiv = document.getElementById("result");
 
-    let village = "Unknown";
-    if (villageInput) {
-        village = villageInput.value.trim() || "Unknown";
-    }
-
-    if (!text) {
+    if (!symptoms) {
         alert("Please enter symptoms.");
         return;
     }
@@ -22,119 +17,90 @@ async function analyze() {
         const response = await fetch("/analyze", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                text: text,
-                village: village
-            })
+            body: JSON.stringify({ text: symptoms })
         });
-
-        if (!response.ok) {
-            throw new Error("Server error");
-        }
 
         const data = await response.json();
 
-        displayResult(data);
-        updateChart(data.risk_score);
-        storeCaseLocally(data);
+        if (!response.ok) {
+            alert(data.error);
+            return;
+        }
+
+        displayPatientResult(data);
 
     } catch (error) {
-        console.error(error);
-        alert("AI analysis failed. Please try again.");
+        alert("Analysis failed. Try again.");
     }
 }
 
-/* ===============================
-   DISPLAY RESULT
-=================================*/
+/* =========================================
+   DISPLAY PATIENT RESULT (NO SCORE)
+========================================= */
 
-function displayResult(data) {
-    const output = document.getElementById("output");
+function displayPatientResult(data) {
+    const resultDiv = document.getElementById("result");
 
     let riskClass = "";
     if (data.risk_level === "HIGH RISK") riskClass = "high-risk";
     else if (data.risk_level === "MODERATE RISK") riskClass = "moderate-risk";
     else riskClass = "low-risk";
 
-    output.innerHTML = `
+    resultDiv.innerHTML = `
         <div class="card">
             <h3 class="${riskClass}">Risk Level: ${data.risk_level}</h3>
-            <p><strong>Risk Score:</strong> ${data.risk_score}</p>
-            <p><strong>Detected Symptoms:</strong> ${data.explanation.detected_symptoms.join(", ") || "None"}</p>
-            <p><strong>Severity Words:</strong> ${data.explanation.severity_words.join(", ") || "None"}</p>
-            <p><strong>Duration:</strong> ${data.explanation.duration}</p>
-            <p><strong>Emergency Flag:</strong> ${data.explanation.emergency_flag ? "Yes" : "No"}</p>
-            <p><strong>Reasoning:</strong> ${data.explanation.risk_reasoning}</p>
+            <p><strong>AI Suggestion:</strong></p>
+            <p>${data.suggestion}</p>
+            <p><em>This is not a medical diagnosis. Please consult a healthcare professional.</em></p>
         </div>
     `;
 }
 
-/* ===============================
-   UPDATE CHART
-=================================*/
+/* =========================================
+   DOCTOR OVERRIDE
+========================================= */
 
-function updateChart(score) {
-    const ctx = document.getElementById("chart");
+async function overrideCase(caseId) {
+    const newRisk = prompt("Enter override risk (LOW RISK / MODERATE RISK / HIGH RISK)");
 
-    if (!ctx) return;
+    if (!newRisk) return;
 
-    if (riskChart) {
-        riskChart.destroy();
-    }
-
-    riskChart = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: ["Risk Score"],
-            datasets: [{
-                label: "AI Risk Score",
-                data: [score],
-                backgroundColor: score >= 20 ? "#ff4d4d"
-                    : score >= 10 ? "#ffcc00"
-                    : "#00ff99"
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
+    const response = await fetch("/doctor/override", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            case_id: caseId,
+            override: newRisk
+        })
     });
+
+    const data = await response.json();
+    alert(data.status || data.error);
+    location.reload();
 }
 
-/* ===============================
-   LOCAL STORAGE (Patient History)
-=================================*/
-
-function storeCaseLocally(data) {
-    let history = JSON.parse(localStorage.getItem("ruralcare_cases") || "[]");
-    history.unshift(data);
-    localStorage.setItem("ruralcare_cases", JSON.stringify(history));
-}
-
-/* ===============================
-   LOAD DOCTOR ANALYTICS
-=================================*/
+/* =========================================
+   LOAD ANALYTICS (DOCTOR)
+========================================= */
 
 async function loadAnalytics() {
     try {
         const response = await fetch("/analytics");
         const data = await response.json();
 
-        console.log("Analytics:", data);
-        // You can expand this later for advanced dashboards
+        const output = document.getElementById("analytics");
+
+        output.innerHTML = `
+            <div class="card">
+                <h3>Total Cases: ${data.total_cases}</h3>
+                <p><strong>Risk Distribution:</strong></p>
+                <pre>${JSON.stringify(data.risk_distribution, null, 2)}</pre>
+                <p><strong>Village Distribution:</strong></p>
+                <pre>${JSON.stringify(data.village_distribution, null, 2)}</pre>
+            </div>
+        `;
 
     } catch (error) {
         console.error("Analytics load failed");
     }
 }
-
-/* ===============================
-   AUTO INIT
-=================================*/
-
-window.onload = function () {
-    loadAnalytics();
-};
