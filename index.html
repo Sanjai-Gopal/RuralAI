@@ -1,0 +1,28 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>RuralCare AI Advanced</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="container">
+<h1>🏥 RuralCare AI - Advanced</h1>
+
+<textarea id="symptoms" placeholder="Describe symptoms..."></textarea>
+<button onclick="analyze()">Analyze</button>
+
+<div id="output" class="card"></div>
+
+<h2>Doctor Analytics</h2>
+<canvas id="chart"></canvas>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+</html>
