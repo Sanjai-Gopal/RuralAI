@@ -1,6 +1,6 @@
-/* ===============================
-   GLOBAL STYLING
-=================================*/
+/* ========================================
+   GLOBAL THEME
+======================================== */
 
 body {
     margin: 0;
@@ -16,27 +16,43 @@ body {
     padding: 40px 20px;
 }
 
-/* ===============================
+/* ========================================
    HEADINGS
-=================================*/
+======================================== */
+
+h1, h2, h3 {
+    font-weight: 600;
+}
 
 h1 {
     text-align: center;
     font-size: 2.5rem;
-    margin-bottom: 30px;
-    letter-spacing: 1px;
+    margin-bottom: 40px;
 }
 
-h2 {
-    margin-top: 30px;
-    font-weight: 600;
+/* ========================================
+   CARDS
+======================================== */
+
+.card {
+    background: rgba(255,255,255,0.08);
+    padding: 25px;
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    margin-bottom: 25px;
+    transition: 0.3s ease;
 }
 
-/* ===============================
-   FORM ELEMENTS
-=================================*/
+.card:hover {
+    transform: translateY(-4px);
+}
 
-textarea, input, select {
+/* ========================================
+   FORMS
+======================================== */
+
+input, textarea, select {
     width: 100%;
     padding: 14px;
     border-radius: 8px;
@@ -54,18 +70,17 @@ textarea {
     resize: vertical;
 }
 
-/* ===============================
+/* ========================================
    BUTTONS
-=================================*/
+======================================== */
 
 button {
-    padding: 12px 20px;
+    padding: 12px 22px;
     border-radius: 8px;
     border: none;
     font-weight: bold;
     cursor: pointer;
     transition: 0.3s ease;
-    margin-bottom: 15px;
     background: #00c9a7;
     color: #000;
 }
@@ -75,22 +90,33 @@ button:hover {
     background: #00f5c0;
 }
 
-/* ===============================
-   CARD COMPONENT
-=================================*/
+/* ========================================
+   LOGIN / REGISTER BOX
+======================================== */
 
-.card {
-    background: rgba(255,255,255,0.1);
-    padding: 20px;
-    border-radius: 12px;
-    margin-top: 20px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+.auth-box {
+    max-width: 450px;
+    margin: auto;
 }
 
-/* ===============================
-   RISK LEVEL COLORS
-=================================*/
+.auth-box h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* ========================================
+   DASHBOARD GRID
+======================================== */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+/* ========================================
+   RISK COLORS
+======================================== */
 
 .high-risk {
     color: #ff4d4d;
@@ -107,17 +133,14 @@ button:hover {
     font-weight: bold;
 }
 
-/* ===============================
-   TABLE (Doctor Dashboard)
-=================================*/
+/* ========================================
+   TABLE (Doctor)
+======================================== */
 
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 8px;
-    overflow: hidden;
 }
 
 th {
@@ -135,38 +158,24 @@ tr:hover {
     background: rgba(255,255,255,0.05);
 }
 
-/* ===============================
-   LOGIN SECTION
-=================================*/
+/* ========================================
+   ALERTS
+======================================== */
 
-#loginSection {
-    max-width: 500px;
-    margin: auto;
-    padding: 30px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+.alert {
+    background: rgba(255,0,0,0.2);
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
 }
 
-/* ===============================
-   DASHBOARD SECTIONS
-=================================*/
-
-.hidden {
-    display: none;
-}
-
-/* ===============================
+/* ========================================
    RESPONSIVE
-=================================*/
+======================================== */
 
 @media (max-width: 768px) {
     .container {
         padding: 20px;
-    }
-
-    h1 {
-        font-size: 2rem;
     }
 
     button {
