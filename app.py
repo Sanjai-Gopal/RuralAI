@@ -68,10 +68,10 @@ with app.app_context():
 
 @app.route("/test")
 def test():
-    return "Server Updated"
+    return "Server Updated Successfully ✅"
 
 # =========================================
-# NLP ENGINE (Same Logic, No spaCy)
+# SIMPLE NLP ENGINE (No spaCy)
 # =========================================
 
 SYMPTOM_WEIGHTS = {
@@ -114,34 +114,36 @@ EMERGENCY_PATTERNS = [
 ]
 
 def analyze_text(text, village="Unknown"):
-    text = text.lower()
+    text_lower = text.lower()
 
     detected_symptoms = []
     detected_severity = []
     score = 0
     emergency_flag = False
 
-    # Normalization
-    text = re.sub(r'[^a-z0-9\s]', '', text)
-
+    # Symptom detection
     for symptom, weight in SYMPTOM_WEIGHTS.items():
-        if symptom in text:
+        if symptom in text_lower:
             detected_symptoms.append(symptom)
             score += weight
 
-    for severity, weight in SEVERITY_MODIFIERS.items():
-        if severity in text:
-            detected_severity.append(severity)
-            score += weight
+    # Severity detection
+    for word, value in SEVERITY_MODIFIERS.items():
+        if word in text_lower:
+            detected_severity.append(word)
+            score += value
 
+    # Emergency detection
     for pattern in EMERGENCY_PATTERNS:
-        if pattern in text:
+        if pattern in text_lower:
             emergency_flag = True
             score += 15
 
-    duration_match = re.findall(r"(\d+\s*(day|days|week|weeks|month|months|hour|hours))", text)
+    # Duration detection
+    duration_match = re.findall(r"(\d+\s*(day|days|week|weeks|month|months|hour|hours))", text_lower)
     duration = duration_match[0][0] if duration_match else "not specified"
 
+    # Risk classification
     if emergency_flag or score >= 20:
         risk = "HIGH RISK"
     elif score >= 10:
@@ -155,13 +157,13 @@ def analyze_text(text, village="Unknown"):
         "emergency_detected": emergency_flag,
         "duration": duration,
         "final_score": score,
-        "explanation": "Risk calculated using weighted symptom scoring."
+        "explanation": "Risk calculated using keyword-based weighted scoring."
     }
 
     return risk, score, reasoning
 
 # =========================================
-# AUTH ROUTES (UNCHANGED)
+# AUTH ROUTES
 # =========================================
 
 @app.route("/")
@@ -230,7 +232,7 @@ def logout():
     return redirect(url_for("login"))
 
 # =========================================
-# PATIENT DASHBOARD (UNCHANGED)
+# PATIENT DASHBOARD
 # =========================================
 
 @app.route("/patient")
@@ -280,7 +282,7 @@ def analyze():
     })
 
 # =========================================
-# DOCTOR & ANALYTICS (UNCHANGED)
+# DOCTOR DASHBOARD
 # =========================================
 
 @app.route("/doctor")
@@ -308,6 +310,10 @@ def doctor_override():
 
     return jsonify({"error": "Case not found"}), 404
 
+# =========================================
+# ANALYTICS
+# =========================================
+
 @app.route("/analytics")
 @login_required
 def analytics():
@@ -324,8 +330,8 @@ def analytics():
         village_distribution[case.village] += 1
 
     return jsonify({
-        "risk_distribution": risk_distribution,
-        "village_distribution": village_distribution,
+        "risk_distribution": dict(risk_distribution),
+        "village_distribution": dict(village_distribution),
         "total_cases": len(cases)
     })
 
