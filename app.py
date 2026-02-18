@@ -6,10 +6,7 @@ from datetime import datetime
 import os
 import re
 from collections import defaultdict
-import spacy
 import json
-
-nlp = spacy.load("en_core_web_sm")
 
 # =========================================
 # APP CONFIGURATION
@@ -66,7 +63,7 @@ with app.app_context():
     db.create_all()
 
 # =========================================
-# TEST ROUTE (Added here)
+# TEST ROUTE
 # =========================================
 
 @app.route("/test")
@@ -74,7 +71,7 @@ def test():
     return "Server Updated"
 
 # =========================================
-# NLP ENGINE
+# NLP ENGINE (Same Logic, No spaCy)
 # =========================================
 
 SYMPTOM_WEIGHTS = {
@@ -117,31 +114,32 @@ EMERGENCY_PATTERNS = [
 ]
 
 def analyze_text(text, village="Unknown"):
-    doc = nlp(text.lower())
+    text = text.lower()
 
     detected_symptoms = []
     detected_severity = []
     score = 0
     emergency_flag = False
 
-    normalized_text = " ".join([token.lemma_ for token in doc])
+    # Normalization
+    text = re.sub(r'[^a-z0-9\s]', '', text)
 
     for symptom, weight in SYMPTOM_WEIGHTS.items():
-        if symptom in normalized_text:
+        if symptom in text:
             detected_symptoms.append(symptom)
             score += weight
 
-    for token in doc:
-        if token.lemma_ in SEVERITY_MODIFIERS:
-            detected_severity.append(token.lemma_)
-            score += SEVERITY_MODIFIERS[token.lemma_]
+    for severity, weight in SEVERITY_MODIFIERS.items():
+        if severity in text:
+            detected_severity.append(severity)
+            score += weight
 
     for pattern in EMERGENCY_PATTERNS:
-        if pattern in text.lower():
+        if pattern in text:
             emergency_flag = True
             score += 15
 
-    duration_match = re.findall(r"(\d+\s*(day|days|week|weeks|month|months|hour|hours))", text.lower())
+    duration_match = re.findall(r"(\d+\s*(day|days|week|weeks|month|months|hour|hours))", text)
     duration = duration_match[0][0] if duration_match else "not specified"
 
     if emergency_flag or score >= 20:
@@ -157,13 +155,13 @@ def analyze_text(text, village="Unknown"):
         "emergency_detected": emergency_flag,
         "duration": duration,
         "final_score": score,
-        "explanation": "Risk calculated using NLP lemmatization and weighted scoring."
+        "explanation": "Risk calculated using weighted symptom scoring."
     }
 
     return risk, score, reasoning
 
 # =========================================
-# AUTH ROUTES
+# AUTH ROUTES (UNCHANGED)
 # =========================================
 
 @app.route("/")
@@ -232,7 +230,7 @@ def logout():
     return redirect(url_for("login"))
 
 # =========================================
-# PATIENT DASHBOARD
+# PATIENT DASHBOARD (UNCHANGED)
 # =========================================
 
 @app.route("/patient")
@@ -282,7 +280,7 @@ def analyze():
     })
 
 # =========================================
-# DOCTOR DASHBOARD
+# DOCTOR & ANALYTICS (UNCHANGED)
 # =========================================
 
 @app.route("/doctor")
@@ -309,10 +307,6 @@ def doctor_override():
         return jsonify({"status": "Override saved"})
 
     return jsonify({"error": "Case not found"}), 404
-
-# =========================================
-# ANALYTICS
-# =========================================
 
 @app.route("/analytics")
 @login_required
